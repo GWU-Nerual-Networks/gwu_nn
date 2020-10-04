@@ -2,7 +2,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 
 
-class LossFunction(ABC):
+class ActivationFunction(ABC):
 
     def __init__(self):
         super().__init__()
@@ -16,7 +16,7 @@ class LossFunction(ABC):
         pass
 
 
-class SigmoidActivation(LossFunction):
+class SigmoidActivation(ActivationFunction):
 
     @classmethod
     def activation(cls, x):
@@ -26,7 +26,25 @@ class SigmoidActivation(LossFunction):
     def activation_partial_derivative(cls, x):
         return np.exp(-x) / (1 + np.exp(-x))**2
 
-def Softmax(LossFunction):
+
+class RELUActivation(ActivationFunction):
+
+    @classmethod
+    def activation(cls, x):
+        if x > 0:
+            return x
+        else:
+            return 0
+
+    @classmethod
+    def activation_partial_derivative(cls, x):
+        if x > 0:
+            return 1
+        else:
+            return 0
+
+
+class Softmax(ActivationFunction):
 
     @classmethod
     def activation(cls, x):

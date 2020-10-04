@@ -15,10 +15,11 @@ class GWUNetwork():
     def get_weights(self):
         pass
 
-    def set_loss(self, loss):
+    def compile(self, loss, lr):
         layer_loss = loss_functions[loss]
         self.loss = layer_loss.loss
         self.loss_prime = layer_loss.loss_partial_derivative
+        self.learning_rate = lr
 
     # predict output for given input
     def predict(self, input_data):
@@ -36,11 +37,11 @@ class GWUNetwork():
 
         return result
 
-    def measure_loss(self, x, y):
+    def evaluate(self, x, y):
         pass
 
     # train the network
-    def fit(self, x_train, y_train, epochs, learning_rate):
+    def fit(self, x_train, y_train, epochs, batch_size=None):
         # sample dimension first
         samples = len(x_train)
 
@@ -59,9 +60,25 @@ class GWUNetwork():
                 # backward propagation
                 error = self.loss_prime(y_train[j], output)
                 for layer in reversed(self.layers):
-                    error = layer.backward_propagation(error, learning_rate)
+                    error = layer.backward_propagation(error, self.learning_rate)
 
             # calculate average error on all samples
             if i % 10 == 0:
                 err /= samples
                 print('epoch %d/%d   error=%f' % (i + 1, epochs, err))
+                
+    def __repr__(self):
+        rep = "Model:"
+
+        if len(self.layers) < 1:
+            return "Model: Empty"
+        else:
+            rep += "\n"
+
+        for layer in self.layers:
+            if layer.type == "Activation":
+                rep += f'{layer.name} Activation'
+            else:
+                rep += f'{layer.name} - ({layer.input_size}, {layer.output_size})\n'
+
+        return rep

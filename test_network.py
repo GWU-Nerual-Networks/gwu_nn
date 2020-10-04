@@ -33,8 +33,8 @@ network = GWUNetwork()
 network.add(Dense(2, 1, True))
 network.add(Sigmoid())
 #network.set_loss('mse')
-network.set_loss('log_loss')
-network.fit(X_train, y_train, epochs=100, learning_rate=0.001)
+network.compile('log_loss', 0.001)
+network.fit(X_train, y_train, epochs=100)
 
 
 

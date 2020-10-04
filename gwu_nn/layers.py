@@ -1,8 +1,12 @@
 import numpy as np
+from gwu_nn.activation_layers import Sigmoid, RELU
 
+activation_functions = {'relu': RELU, 'sigmoid': Sigmoid}
 
 class Dense:
     def __init__(self, input_size, output_size, add_bias=False):
+        self.type = None
+        self.name = "Dense"
         self.input_size = input_size
         self.output_size = output_size
         self.weights = np.random.randn(input_size, output_size) / np.sqrt(input_size + output_size)
@@ -21,7 +25,6 @@ class Dense:
     def backward_propagation(self, output_error, learning_rate):
         input_error = np.dot(output_error, self.weights.T)
         weights_error = np.dot(self.input.T, output_error)
-        # bias_error = output_error
 
         self.weights -= learning_rate * weights_error
         if self.add_bias:

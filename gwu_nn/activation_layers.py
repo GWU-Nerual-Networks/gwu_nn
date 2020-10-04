@@ -1,8 +1,9 @@
-from gwu_nn.activation_functions import SigmoidActivation
+from gwu_nn.activation_functions import SigmoidActivation, RELUActivation
 
 
 class ActivationLayer:
     def __init__(self, activation):
+        self.type = "Activation"
         layer_activation = activation
         self.activation = layer_activation.activation
         self.activation_prime = layer_activation.activation_partial_derivative
@@ -18,3 +19,10 @@ class ActivationLayer:
 class Sigmoid(ActivationLayer):
     def __init__(self):
         super().__init__(SigmoidActivation)
+        self.name = "Sigmoid"
+
+class RELU(ActivationLayer):
+    def __init__(self):
+        super().__init__(RELUActivation)
+        self.name = "RELU"
+
