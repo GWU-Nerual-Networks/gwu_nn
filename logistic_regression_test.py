@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 
 from gwu_nn.gwu_network import GWUNetwork
 from gwu_nn.layers import Dense
-from gwu_nn.activation_layers import Sigmoid
+from gwu_nn.activation_layers import Sigmoid, RELU
 
 
 y_col = 'Survived'
@@ -22,8 +22,8 @@ X = stand_X
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
 
 network = GWUNetwork()
-network.add(Dense(6, 14, True))
-network.add(Dense(14, 1, True))
+network.add(Dense(6, 14, True, activation='relu'))
+network.add(Dense(14, 1, True))#, activation='sigmoid'))
 network.add(Sigmoid())
-network.compile(loss='log_loss', lr=0.001)
+network.compile(loss='log_loss', lr=.001)
 network.fit(X_train, y_train, batch_size=10, epochs=100)

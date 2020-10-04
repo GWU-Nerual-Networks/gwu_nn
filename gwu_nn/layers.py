@@ -20,7 +20,7 @@ def apply_activation_backward(backward_pass):
         output_error = args[1]
         learning_rate = args[2]
         if args[0].activation:
-            outpute_error = args[0].activation.backward_propogation(output_error, learning_rate)
+            output_error = args[0].activation.backward_propogation(output_error, learning_rate)
         return backward_pass(output_error, learning_rate)
     return wrapper
 

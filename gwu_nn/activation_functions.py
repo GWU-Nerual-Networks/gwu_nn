@@ -2,6 +2,14 @@ import numpy as np
 from abc import ABC, abstractmethod
 
 
+def vectorize_activation(activation):
+    def wrapper(*args):
+        vec_activation = np.vectorize(activation)
+        input = args[1]
+        return vec_activation(input)
+    return wrapper
+
+
 class ActivationFunction(ABC):
 
     def __init__(self):
@@ -31,6 +39,11 @@ class RELUActivation(ActivationFunction):
 
     @classmethod
     def activation(cls, x):
+        vec = np.vectorize(cls.activation_func)
+        return vec(x)
+
+    @classmethod
+    def activation_func(cls, x):
         if x > 0:
             return x
         else:
@@ -38,8 +51,13 @@ class RELUActivation(ActivationFunction):
 
     @classmethod
     def activation_partial_derivative(cls, x):
+        vec = np.vectorize(cls.activation_parital_derivative_func)
+        return vec(x)
+
+    @classmethod
+    def activation_parital_derivative_func(cls, x):
         if x > 0:
-            return 1
+            return x
         else:
             return 0
 
