@@ -1,3 +1,4 @@
+import numpy as np
 from gwu_nn.loss_functions import MSE, LogLoss
 
 loss_functions = {'mse': MSE, 'log_loss': LogLoss}
@@ -54,11 +55,14 @@ class GWUNetwork():
                 for layer in self.layers:
                     output = layer.forward_propagation(output)
 
+                if output < 0:
+                    print("What?")
                 # compute loss (for display purpose only)
-                err += self.loss(y_train[j], output)
+                y_true = np.array(y_train[j]).reshape(-1, 1)
+                err += self.loss(y_true, output)
 
                 # backward propagation
-                error = self.loss_prime(y_train[j], output)
+                error = self.loss_prime(y_true, output)
                 for layer in reversed(self.layers):
                     error = layer.backward_propagation(error, self.learning_rate)
 

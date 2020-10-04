@@ -23,7 +23,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random
 
 network = GWUNetwork()
 network.add(Dense(6, 14, True, activation='relu'))
-network.add(Dense(14, 1, True))#, activation='sigmoid'))
-network.add(Sigmoid())
-network.compile(loss='log_loss', lr=.001)
+network.add(Dense(14, 1, True, activation='sigmoid'))
+network.compile(loss='log_loss', lr=.5)
 network.fit(X_train, y_train, batch_size=10, epochs=100)

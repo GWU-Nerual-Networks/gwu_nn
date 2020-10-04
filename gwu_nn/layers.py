@@ -2,14 +2,14 @@ import numpy as np
 from abc import ABC, abstractmethod
 from gwu_nn.activation_layers import Sigmoid, RELU
 
-activation_functions = {'relu': RELU, 'sigmoid': Sigmoid}
+activation_functions = {'relu': RELU(), 'sigmoid': Sigmoid()}
 
 
 def apply_activation_forward(forward_pass):
     def wrapper(*args):
-        output = forward_pass(args[1])
+        output = forward_pass(args[0], args[1])
         if args[0].activation:
-            return args[0].activation.forward_propogation(output)
+            return args[0].activation.forward_propagation(output)
         else:
             return output
     return wrapper
@@ -20,18 +20,19 @@ def apply_activation_backward(backward_pass):
         output_error = args[1]
         learning_rate = args[2]
         if args[0].activation:
-            output_error = args[0].activation.backward_propogation(output_error, learning_rate)
-        return backward_pass(output_error, learning_rate)
+            output_error = args[0].activation.backward_propagation(output_error, learning_rate)
+        return backward_pass(args[0], output_error, learning_rate)
     return wrapper
 
 
 class Layer():
 
     def __init__(self, activation=None):
-        super().__init__()
         self.type = "Layer"
         if activation:
             self.activation = activation_functions[activation]
+        else:
+            self.activation = None
 
     @apply_activation_forward
     def forward_propagation(cls, input):
@@ -55,7 +56,7 @@ class Dense(Layer):
         if add_bias:
             self.bias = np.random.randn(1, output_size) / np.sqrt(input_size + output_size)
 
-
+    @apply_activation_forward
     def forward_propagation(self, input):
         self.input = input
         output = np.dot(input, self.weights)
@@ -64,6 +65,7 @@ class Dense(Layer):
         else:
             return output
 
+    @apply_activation_backward
     def backward_propagation(self, output_error, learning_rate):
         input_error = np.dot(output_error, self.weights.T)
         weights_error = np.dot(self.input.T, output_error)
