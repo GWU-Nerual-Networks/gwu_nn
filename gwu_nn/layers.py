@@ -1,10 +1,51 @@
 import numpy as np
+from abc import ABC, abstractmethod
 from gwu_nn.activation_layers import Sigmoid, RELU
 
 activation_functions = {'relu': RELU, 'sigmoid': Sigmoid}
 
-class Dense:
-    def __init__(self, input_size, output_size, add_bias=False):
+
+def apply_activation_forward(forward_pass):
+    def wrapper(*args):
+        output = forward_pass(args[1])
+        if args[0].activation:
+            return args[0].activation.forward_propogation(output)
+        else:
+            return output
+    return wrapper
+
+
+def apply_activation_backward(backward_pass):
+    def wrapper(*args):
+        output_error = args[1]
+        learning_rate = args[2]
+        if args[0].activation:
+            outpute_error = args[0].activation.backward_propogation(output_error, learning_rate)
+        return backward_pass(output_error, learning_rate)
+    return wrapper
+
+
+class Layer():
+
+    def __init__(self, activation=None):
+        super().__init__()
+        self.type = "Layer"
+        if activation:
+            self.activation = activation_functions[activation]
+
+    @apply_activation_forward
+    def forward_propagation(cls, input):
+        pass
+
+    @apply_activation_backward
+    def backward_propogation(cls, output_error, learning_rate):
+        pass
+
+
+class Dense(Layer):
+
+    def __init__(self, input_size, output_size, add_bias=False, activation=None):
+        super().__init__(activation)
         self.type = None
         self.name = "Dense"
         self.input_size = input_size
@@ -13,6 +54,7 @@ class Dense:
         self.add_bias = add_bias
         if add_bias:
             self.bias = np.random.randn(1, output_size) / np.sqrt(input_size + output_size)
+
 
     def forward_propagation(self, input):
         self.input = input
