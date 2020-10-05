@@ -30,7 +30,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random
 
 # Create our model
 network = GWUNetwork()
-network.add(Dense(2, 1, True))
+network.add(Dense(2, 1, True, 'sigmoid'))
 network.add(Sigmoid())
 #network.set_loss('mse')
 network.compile('log_loss', 0.001)

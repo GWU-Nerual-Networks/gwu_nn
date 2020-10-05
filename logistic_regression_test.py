@@ -5,11 +5,10 @@ from sklearn.model_selection import train_test_split
 
 from gwu_nn.gwu_network import GWUNetwork
 from gwu_nn.layers import Dense
-from gwu_nn.activation_layers import Sigmoid
 
 
 y_col = 'Survived'
-x_cols = ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare']
+x_cols = ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']
 df = pd.read_csv('titanic_data.csv')
 y = np.array(df[y_col]).reshape(-1, 1)
 orig_X = df[x_cols]
@@ -22,8 +21,7 @@ X = stand_X
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
 
 network = GWUNetwork()
-network.add(Dense(6, 14, True))
-network.add(Dense(14, 1, True))
-network.add(Sigmoid())
-network.compile(loss='log_loss', lr=0.001)
+network.add(Dense(X.shape[1], 14, True, activation='relu'))
+network.add(Dense(14, 1, True, activation='sigmoid'))
+network.compile(loss='log_loss', lr=.01)
 network.fit(X_train, y_train, batch_size=10, epochs=100)
