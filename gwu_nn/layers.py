@@ -2,7 +2,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from gwu_nn.activation_layers import Sigmoid, RELU
 
-activation_functions = {'relu': RELU(), 'sigmoid': Sigmoid()}
+activation_functions = {'relu': RELU, 'sigmoid': Sigmoid}
 
 
 def apply_activation_forward(forward_pass):
@@ -30,7 +30,7 @@ class Layer():
     def __init__(self, activation=None):
         self.type = "Layer"
         if activation:
-            self.activation = activation_functions[activation]
+            self.activation = activation_functions[activation]()
         else:
             self.activation = None
 
