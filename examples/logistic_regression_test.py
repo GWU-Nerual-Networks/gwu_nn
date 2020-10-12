@@ -10,7 +10,7 @@ from gwu_nn.activation_layers import Sigmoid
 
 y_col = 'Survived'
 x_cols = ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked']
-df = pd.read_csv('../titanic_data.csv')
+df = pd.read_csv('examples/data/titanic_data.csv')
 y = np.array(df[y_col]).reshape(-1, 1)
 orig_X = df[x_cols]
 
