@@ -1,7 +1,7 @@
 import numpy as np
-from gwu_nn.loss_functions import MSE, LogLoss
+from gwu_nn.loss_functions import MSE, LogLoss, CrossEntropy
 
-loss_functions = {'mse': MSE, 'log_loss': LogLoss}
+loss_functions = {'mse': MSE, 'log_loss': LogLoss, 'cross_entropy': CrossEntropy}
 
 class GWUNetwork():
 
@@ -11,6 +11,10 @@ class GWUNetwork():
         self.loss_prime = None
 
     def add(self, layer):
+        if len(self.layers) > 0:
+            layer.init_weights(self.layers[-1].output_size)
+        else:
+            layer.init_weights(layer.input_size)
         self.layers.append(layer)
 
     def get_weights(self):
@@ -55,8 +59,6 @@ class GWUNetwork():
                 for layer in self.layers:
                     output = layer.forward_propagation(output)
 
-                if output < 0:
-                    print("What?")
                 # compute loss (for display purpose only)
                 y_true = np.array(y_train[j]).reshape(-1, 1)
                 err += self.loss(y_true, output)
