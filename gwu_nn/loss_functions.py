@@ -1,5 +1,5 @@
 import numpy as np
-from gwu_nn.activation_functions import Softmax
+from gwu_nn.activation_functions import SoftmaxActivation
 from abc import ABC, abstractmethod
 
 
@@ -47,7 +47,7 @@ class CrossEntropy(LossFunction):
     @classmethod
     def loss_partial_derivative(cls, y_true, y_pred):
         m = y_true.shape[0]
-        grad = Softmax.activation(y_pred)
+        grad = SoftmaxActivation.activation(y_pred)
         grad[range(m), y_true] -= 1
         grad = grad / m
         return grad
