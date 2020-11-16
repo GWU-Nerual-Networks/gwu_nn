@@ -30,3 +30,5 @@ class CNN(GWUNetwork):
         for i in range(len(mat1)):
             for j in range(len(mat1[0])):
                 ws += mat1[i][j] * mat2[i][j]
+
+        return ws
