@@ -43,19 +43,28 @@ class GWUNetwork():
         return result
 
     def evaluate(self, x, y):
-        pass
+        correct = 0
+        predictions = self.predict(x)
+        my_list = []
+
+        for i in range(len(predictions)):
+            if predictions[i]== y[i]:
+                correct += 1
+        print("accuracy", (correct)/len(predictions))
+
 
     # train the network
     def fit(self, x_train, y_train, epochs, batch_size=None):
         # sample dimension first
         samples = len(x_train)
-
         # training loop
         for i in range(epochs):
             err = 0
             for j in range(samples):
+                
                 # forward propagation
-                output = x_train[j].reshape(1, -1)
+                output = x_train[j]
+                # output = x_train[j].reshape(1, -1)
                 for layer in self.layers:
                     output = layer.forward_propagation(output)
 
@@ -72,7 +81,7 @@ class GWUNetwork():
             if i % 10 == 0:
                 err /= samples
                 print('epoch %d/%d   error=%f' % (i + 1, epochs, err))
-                
+
     def __repr__(self):
         rep = "Model:"
 
