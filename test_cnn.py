@@ -8,3 +8,4 @@ mat4 = [[0]]
 
 assert cnn.weighted_sum(mat1, mat2) == 96
 assert cnn.weighted_sum(mat3, mat4) == 0
+assert cnn.flatten(mat1) == [1, 2, 3, 4, 5, 6, 7, 8, 9]

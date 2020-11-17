@@ -14,9 +14,14 @@ class CNN(GWUNetwork):
         """Pools the data using an average."""
         pass
 
-    def flatten(self):
-        """Flattens the data into a (1d) vector so as to maintain compatibility with the rest of the library."""
-        pass
+    def flatten(self, mat):
+        """Flattens the matrix into a (1d) vector so as to maintain compatibility with the rest of the library."""
+
+        v = []
+        for i in range(len(mat)):
+            v.extend(mat[i])
+
+        return v
 
 
     def weighted_sum(self, mat1, mat2):
