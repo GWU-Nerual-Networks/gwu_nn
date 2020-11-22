@@ -50,39 +50,43 @@ class Layer():
 
 class Conv2D(Layer):
 
-    def __init__(self, num_filters = 5, kernel_size = 3, stride = 1, add_bias=False, activation=None, input_shape=None):
+    def __init__(self, num_filters = 8, kernel_size = 3, stride = 1, add_bias=False, activation=None, input_shape=None):
         super().__init__(activation)
         self.type = None
         self.name = "Conv2D"
         self.num_filters = num_filters
         self.input_shape = input_shape
-        if type(input_shape == 'tuple'):
+        self.input_size = None
+        if type(input_shape == 'tuple') and input_shape != None:
             self.input_size = input_shape[0]
-        else:
+        elif input_shape != None:
             self.input_size = input_shape
         self.add_bias = add_bias
         self.kernel_size = kernel_size
         self.stride = stride
-        self.activation = activation
-        convolved_dim = int((self.input_size - kernel_size)/stride) + 1
-        self.output_size = convolved_dim
+        if self.input_size != None:
+            convolved_dim = int((self.input_size - kernel_size)/stride) + 1
+            self.output_size = convolved_dim
 
     def init_weights(self, input_size):
         """Initialize the weights for the layer and initializes the filters
         """
         if self.input_size is None:
             self.input_size = input_size
+            convolved_dim = int((self.input_size - self.kernel_size)/self.stride) + 1
+            self.output_size = convolved_dim
 
+        filter_shape = (self.num_filters, self.kernel_size, self.kernel_size)
+        stddev = 1/np.sqrt(np.prod(filter_shape ))
+        self.filters = np.random.normal(loc = 0, scale = stddev, size = filter_shape )
         #TO DO
-
-        #initialize self.weights
         #initialize self.bias
-        #initialize self.filters
 
     @apply_activation_forward
     def forward_propagation(self, input):
         """Applies the forward propagation for a Conv2D layer. calls convolve function """
-        output = self.convolve(self.stride, self.add_bias, self.kernel_size,input,self.filters)
+        output = self.convolve(self.stride, self.add_bias, self.kernel_size, input, self.filters)
+        print(output.shape)
         return output
 
     @apply_activation_backward
@@ -90,11 +94,11 @@ class Conv2D(Layer):
         """Applies the backward propagation for a Conv2D layer."""
         pass
 
-    def convolve(stride, add_bias, kernel_size, sample, filters):
+    def convolve(self, stride, add_bias, kernel_size, sample, filters):
         """ Convolving filters over the image"""
 
-        num_filters = len(filters)
-        convolved_dim = int((input_dim - kernel_size)/stride) + 1
+        num_filters = filters.shape[0]
+        convolved_dim = int((self.input_size - kernel_size)/stride) + 1
         all_filter_outputs = np.zeros((num_filters, convolved_dim, convolved_dim))
 
         for i in range(num_filters):
@@ -109,44 +113,52 @@ class Conv2D(Layer):
 
                     x_pos += stride
                 y_pos += stride
-
         return all_filter_outputs
 
 
 class MaxPooling2D(Layer):
 
-    def __init__(self, pool_size, activation=None,  stride = 1):
+    def __init__(self, pool_size, activation=None,  stride = None):
         super().__init__(activation)
         self.type = None
         self.name = "MaxPooling2D"
         self.pool_size = pool_size
-        self.stride = pool_size
 
+        #if stride has not been specified, set stride equal to pool size
+        if stride == None:
+            self.stride = pool_size
+        else:
+            self.stride = stride
 
-
-    def pool(stride, kernel_size, input_dim, sample):
+    def pool(self,stride, pool_size, sample):
         """ Downsampling the image by taking the max values"""
-
+        num_filters = sample.shape[0]
+        input_dim = sample.shape[1]
         pooled_dim = int((input_dim - self.pool_size)/stride) + 1
-        pooled_sample = np.zeros((pooled_dim, pooled_dim))
+        pooled_sample = np.zeros((num_filters,pooled_dim, pooled_dim))
 
-        for i in range(pooled_dim):
-            x_pos = 0
-            y_pos = 0
+        # TO DO: Double check the maxpool logic
+        for i in range(num_filters):
             for j in range(pooled_dim):
-                pooled_sample[i,j] = np.max(sample[y_pos:y_pos+kernel_size, x_pos:x_pos+kernel_size])
-                x_pos += stride
-            y_pos += stride
+                x_pos = 0
+                y_pos = 0
+                for k in range(pooled_dim):
+                    pooled_sample[i,j,k] = np.max(sample[y_pos:y_pos+self.pool_size, x_pos:x_pos+self.pool_size])
+                    x_pos += stride
+                y_pos += stride
+
+        return pooled_sample
 
     def init_weights(self, input_size):
-
         self.input_size = input_size
         pooled_dim = int((input_size - self.pool_size)/self.stride) + 1
         self.output_size =  pooled_dim
+
     @apply_activation_forward
-    def forward_propagation(cls, input):
-        # TO DO: pool function is called here
-        pass
+    def forward_propagation(self, input):
+        output = self.pool(self.stride, self.pool_size, input)
+        print(output.shape)
+        return output
 
     @apply_activation_backward
     def backward_propogation(cls, output_error, learning_rate):
@@ -155,22 +167,24 @@ class MaxPooling2D(Layer):
 
 class Flatten(Layer):
 
-    def __init__(self, activation=None):
+    def __init__(self, activation=None, num_filters = 8):
         super().__init__(activation)
         self.type = None
         self.name = "Flatten"
+        self.num_filters = num_filters
 
     def init_weights(self, input_size):
 
         self.input_size = input_size
-        # TO DO: remeber to take the number of filters into account
-        self.output_size =  input_size*input_size
+        # TO DO: remeber to take the number of filters into account in a fancier way
+        self.output_size =  input_size*input_size * self.num_filters
 
     @apply_activation_forward
-    def forward_propagation(cls, input):
+    def forward_propagation(self, input):
         #flattens the input so that it has only 1 dimension, reshaping takes place here
         self.input = input.reshape(1, -1)
         output = self.input
+        print(output.shape)
         return output
 
     @apply_activation_backward
@@ -215,6 +229,7 @@ class Dense(Layer):
 
         self.input = input
         output = np.dot(input, self.weights)
+        print(output.shape)
         if self.add_bias:
             return output + self.bias
         else:

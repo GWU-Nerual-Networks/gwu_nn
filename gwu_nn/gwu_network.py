@@ -61,7 +61,7 @@ class GWUNetwork():
         for i in range(epochs):
             err = 0
             for j in range(samples):
-                
+
                 # forward propagation
                 output = x_train[j]
                 # output = x_train[j].reshape(1, -1)
