@@ -1,5 +1,6 @@
 import numpy as np
 from gwu_nn.loss_functions import MSE, LogLoss, CrossEntropy
+import math
 
 loss_functions = {'mse': MSE, 'log_loss': LogLoss, 'cross_entropy': CrossEntropy}
 
@@ -44,6 +45,35 @@ class GWUNetwork():
 
     def evaluate(self, x, y):
         pass
+
+    @staticmethod
+    def __batch_random_division(x_train, y_train, batch_size, seed):
+        np.random.seed(seed)
+        c = 0
+        m = x_train.shape[0]
+        batches = []
+
+        # Shuffle x_train & y_train
+        permutation = list(np.random.permutation(m))
+        randomized_X = x_train[permutation].transpose()
+        randomized_Y = y_train[permutation].reshape((m, 1)).transpose()
+
+        num_complete_batches = math.floor(m / batch_size)
+
+        for c in range(0, num_complete_batches):
+            batch_X = randomized_X[:, c * batch_size: (c + 1) * batch_size]
+            batch_Y = randomized_Y[:, c * batch_size: (c + 1) * batch_size]
+
+            batch = (batch_X, batch_Y)
+            batches.append(batch)
+
+        if m % batch_size != 0:
+            mini_batch_X = randomized_X[:, (c + 1) * batch_size:]
+            mini_batch_Y = randomized_Y[:, (c + 1) * batch_size:]
+
+            batch = (mini_batch_X, mini_batch_Y)
+            batches.append(batch)
+        return batches
 
     # train the network
     def fit(self, x_train, y_train, epochs, batch_size=None):
