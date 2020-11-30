@@ -109,3 +109,99 @@ class Dense(Layer):
         if self.add_bias:
             self.bias -= learning_rate * output_error
         return input_error
+
+class Conv_2d(Layer):
+    def __init__(self, kernel_size, activation=None, input_size=None):
+        super().__init__(activation)
+        self.type = None
+        self.name = "Conv_2d"
+        self.input_size = input_size
+        self.kernel_size = kernel_size
+        #self.image = image
+        #self.add_bias = add_bias
+
+    def init_kernel(self):
+        self.kernel = np.random.randn(self.kernel_size, self.kernel_size) / np.sqrt(2 * self.kernel_size)
+
+
+    @apply_activation_forward
+    def forward_propagation(self, input):
+        """Applies the forward propogation for a Conv_2d layer. This convolves the input with the kernel."""
+        #TODO: Add support for multiple filters per layer?
+        self.input = input
+
+        assert len(self.input) >= len(self.kernel)
+        assert len(self.input[0]) >= len(self.kernel[0])
+
+        dim1 = len(self.input) - len(self.kernel) + 1
+        dim2 = len(self.input[0]) - len(self.kernel[0]) + 1
+
+        output = [[0] * dim2 for i in range(dim1)]
+
+        for i in range(dim1):
+            for j in range(dim2):
+                w_sum = self.weighted_sum([row[j:j+len(self.kernel[0])] for row in self.input[i:i+len(self.kernel)]], self.kernel)
+                output[i][j] = w_sum
+
+        return output
+
+    @apply_activation_backward
+    def backward_propogation(self, output_error, learning_rate):
+        pass
+
+    def weighted_sum(self, mat1, mat2):
+        """Helper method to compute the weighted sum of two (sub-)matrices."""
+
+        # The matrices ought to be of the same size.
+        assert len(mat1) == len(mat2)
+        assert len(mat1[0]) == len(mat2[0])
+
+        ws = 0
+        for i in range(len(mat1)):
+            for j in range(len(mat1[0])):
+                ws += mat1[i][j] * mat2[i][j]
+
+        return ws
+
+class Max_Pool(Layer):
+    def __init__(self, kernel_size, stride, activation=None, input_size=None):
+        self.type = None
+        self.name = "Max_Pool"
+        self.kernel_size = kernel_size
+        self.stride = stride
+
+    @apply_activation_forward
+    def forward_propagation(self, input):
+        # Drops unused columns (known as "valid padding" in tensorflow terminology).
+        dim1 = int((len(input) - self.kernel_size) / self.stride) + 1
+        dim2 = int((len(input[0]) - self.kernel_size) / self.stride) + 1
+
+        output = [[0] * dim2 for i in range(dim1)]
+
+        for i in range(0, dim1):
+            for j in range(0, dim2):
+                pool = self.max_mat([row[j*self.stride:j*self.stride+self.kernel_size] for row in input[i*self.stride:i*self.stride+self.kernel_size]])
+                output[i][j] = pool
+
+        return output
+
+    @apply_activation_backward
+    def backward_propagation(self, output_error, learning_rate)
+
+    def flatten(self, mat):
+        """Flattens the matrix into a (1d) vector so as to maintain compatibility with the rest of the library."""
+
+        v = []
+        for i in range(len(mat)):
+            v.extend(mat[i])
+
+        return v
+
+    def max_mat(self, mat):
+        """Helper method to compute the maximum value of a matrix."""
+
+        return max(self.flatten(mat))
+
+
+
+
