@@ -76,32 +76,63 @@ class GWUNetwork():
         return batches
 
     # train the network
-    def fit(self, x_train, y_train, epochs, batch_size=None):
+    def fit(self, x_train, y_train, epochs, batch_size=None, optimizer=None):
         # sample dimension first
         samples = len(x_train)
 
-        # training loop
-        for i in range(epochs):
-            err = 0
-            for j in range(samples):
-                # forward propagation
-                output = x_train[j].reshape(1, -1)
-                for layer in self.layers:
-                    output = layer.forward_propagation(output)
+        if optimizer == 'adam' or optimizer is None:
+            if not batch_size:
+                batch_size = len(x_train)
+            seed = 1
+            for i in range(epochs):
+                seed += 1
+                batches = self.__batch_random_division(x_train, y_train, batch_size, seed)
+                err = 0
+                for batch in batches:
+                    (batch_x, batch_y) = batch
+                    # forward propagation
+                    output = np.transpose(batch_x)
+                    for layer in self.layers:
+                        output = layer.forward_propagation(output)
 
-                # compute loss (for display purpose only)
-                y_true = np.array(y_train[j]).reshape(-1, 1)
-                err += self.loss(y_true, output)
+                    # compute loss (for display purpose only)
+                    y_true = np.array(batch_y).reshape(-1, len(batch_y))
+                    err += self.loss(y_true, output)
 
-                # backward propagation
-                error = self.loss_prime(y_true, output)
-                for layer in reversed(self.layers):
-                    error = layer.backward_propagation(error, self.learning_rate)
+                    # backward propagation
+                    error = self.loss_prime(y_true, output)
 
-            # calculate average error on all samples
-            if i % 10 == 0:
-                err /= samples
-                print('epoch %d/%d   error=%f' % (i + 1, epochs, err))
+                    for layer in reversed(self.layers):
+                        error = layer.backward_propagation(error, self.learning_rate, optimizer)
+
+                # calculate average error on all samples
+                if i % 10 == 0:
+                    err /= samples
+                    print('epoch %d/%d   error=%f' % (i + 1, epochs, err))
+
+        elif optimizer == 'sgd':
+            # training loop
+            for i in range(epochs):
+                err = 0
+                for j in range(samples):
+                    # forward propagation
+                    output = x_train[j].reshape(1, -1)
+                    for layer in self.layers:
+                        output = layer.forward_propagation(output)
+
+                    # compute loss (for display purpose only)
+                    y_true = np.array(y_train[j]).reshape(-1, 1)
+                    err += self.loss(y_true, output)
+
+                    # backward propagation
+                    error = self.loss_prime(y_true, output)
+                    for layer in reversed(self.layers):
+                        error = layer.backward_propagation(error, self.learning_rate, optimizer)
+
+                # calculate average error on all samples
+                if i % 10 == 0:
+                    err /= samples
+                    print('epoch %d/%d   error=%f' % (i + 1, epochs, err))
                 
     def __repr__(self):
         rep = "Model:"
