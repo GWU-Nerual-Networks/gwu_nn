@@ -6,13 +6,43 @@ class CNN(GWUNetwork):
     def __init__(self):
         super().__init__()
 
-    def conv_2d(self):
-        """Slides the kernel over the 2d input and computes a weighted sum"""
-        pass
+    def conv_2d(self, in_mat, kernel):
+        """Slides the kernel over the 2d input and computes a weighted sum."""
 
-    def average_pool(self):
-        """Pools the data using an average."""
-        pass
+        #TODO: Consider zero padding?
+
+        # The input matrix should be at least as large as the kernel.
+        assert len(in_mat) >= len(kernel)
+        assert len(in_mat[0]) >= len(kernel[0])
+
+        dim1 = len(in_mat) - len(kernel) + 1
+        dim2 = len(in_mat[0]) - len(kernel[0]) + 1
+
+        out_mat = [[0] * dim2 for i in range(dim1)]
+
+        for i in range(dim1):
+            for j in range(dim2):
+                w_sum = self.weighted_sum([row[j:j+len(kernel[0])] for row in in_mat[i:i+len(kernel)]], kernel)
+                out_mat[i][j] = w_sum
+
+        return out_mat
+
+    def max_pool(self, in_mat, size, stride):
+        """Pools the data using the maximum function."""
+
+        # Drops unused columns (known as "valid padding" in tensorflow terminology).
+        dim1 = int((len(in_mat) - size) / stride) + 1
+        dim2 = int((len(in_mat[0]) - size) / stride) + 1
+
+        out_mat = [[0] * dim2 for i in range(dim1)]
+
+        for i in range(0, dim1):
+            for j in range(0, dim2):
+                pool = self.max_mat([row[j*stride:j*stride+size] for row in in_mat[i*stride:i*stride+size]])
+                out_mat[i][j] = pool
+
+        return out_mat
+        
 
     def flatten(self, mat):
         """Flattens the matrix into a (1d) vector so as to maintain compatibility with the rest of the library."""
@@ -37,3 +67,8 @@ class CNN(GWUNetwork):
                 ws += mat1[i][j] * mat2[i][j]
 
         return ws
+
+    def max_mat(self, mat):
+        """Helper method to compute the maximum value of a matrix."""
+
+        return max(self.flatten(mat))
