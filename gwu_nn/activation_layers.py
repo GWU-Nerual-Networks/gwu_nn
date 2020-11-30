@@ -23,7 +23,7 @@ class ActivationLayer:
         self.input = input
         return self.activation(input)
 
-    def backward_propagation(self, output_error, learning_rate):
+    def backward_propagation(self, output_error, learning_rate, optimizer):
         """Applies the classes activation function to the provided input
 
         Args:
