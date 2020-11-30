@@ -58,6 +58,8 @@ class Dense(Layer):
         self.input_size = input_size
         self.output_size = output_size
         self.add_bias = add_bias
+        self.v = {}
+        self.s = {}
 
 
     def init_weights(self, input_size):
@@ -92,7 +94,7 @@ class Dense(Layer):
             return output
 
     @apply_activation_backward
-    def backward_propagation(self, output_error, learning_rate):
+    def backward_propagation(self, output_error, learning_rate, optimizer=None):
         """Applies the backward propagation for a densely connected layer. This will calculate the output error
          (dot product of the output_error and the layer's weights) and will calculate the update gradient for the
          weights (dot product of the layer's input values and the output_error).
@@ -105,7 +107,39 @@ class Dense(Layer):
         input_error = np.dot(output_error, self.weights.T)
         weights_error = np.dot(self.input.T, output_error)
 
-        self.weights -= learning_rate * weights_error
-        if self.add_bias:
-            self.bias -= learning_rate * output_error
+        if optimizer == 'adam':
+            self.beta1 = 0.9
+            self.beta2 = 0.999
+            self.epsilon = 1e-8
+
+            self.v["dW"] = np.zeros(self.weights.shape)
+            self.s["dW"] = np.zeros(self.weights.shape)
+            self.v["dW"] = (self.beta1 * self.v["dW"]) + ((1 - self.beta1) * self.weights)
+            self.v["dW"] = self.v["dW"] / (1 - np.power(self.beta1, 2))
+            self.s["dW"] = (self.beta2 * self.s["dW"]) + (
+                    (1 - self.beta2) * np.power(weights_error, 2))
+            self.s["dW"] = self.s["dW"] / (1 - np.power(self.beta2, 2))
+            self.weights -= (learning_rate * (
+                    self.v["dW"] / (np.sqrt(self.s["dW"]) + self.epsilon)))
+
+            if self.add_bias:
+                self.v["db"] = np.zeros(self.bias.shape)
+                self.s["db"] = np.zeros(self.bias.shape)
+
+                self.v["db"] = (self.beta1 * self.v["db"]) + ((1 - self.beta1) * self.bias)
+
+                self.v["db"] = self.v["db"] / (1 - np.power(self.beta1, 2))
+
+                self.s["db"] = (self.beta2 * self.s["db"]) + (
+                        (1 - self.beta2) * np.power(self.bias, 2))
+
+                self.s["db"] = self.s["db"] / (1 - np.power(self.beta2, 2))
+
+                self.bias -= (learning_rate * (
+                        self.v["db"] / (np.sqrt(self.s["db"]) + self.epsilon)))
+
+        else:
+            self.weights -= learning_rate * weights_error
+            if self.add_bias:
+                self.bias -= learning_rate * np.sum(output_error)
         return input_error
