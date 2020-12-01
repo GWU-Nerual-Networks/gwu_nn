@@ -50,12 +50,18 @@ class GWUNetwork():
         # sample dimension first
         samples = len(x_train)
 
+        #print("SAMPLE IS", samples)
+
         # training loop
         for i in range(epochs):
             err = 0
             for j in range(samples):
                 # forward propagation
-                output = x_train[j].reshape(1, -1)
+                #print("x_train[j]", x_train[j])
+                #output = x_train[j].reshape(1, -1)
+                output = np.expand_dims(x_train[j], axis=0)
+                #output = x_train[j]
+                #print("OUTPUT is", output)
                 for layer in self.layers:
                     output = layer.forward_propagation(output)
 
@@ -66,6 +72,7 @@ class GWUNetwork():
                 # backward propagation
                 error = self.loss_prime(y_true, output)
                 for layer in reversed(self.layers):
+                    #print("LLAYER TYPE", type(layer))
                     error = layer.backward_propagation(error, self.learning_rate)
 
             # calculate average error on all samples

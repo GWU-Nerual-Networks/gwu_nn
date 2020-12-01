@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.signal import convolve2d
 from abc import ABC, abstractmethod
 from gwu_nn.activation_layers import Sigmoid, RELU, Softmax
 
@@ -108,27 +109,29 @@ class Dense(Layer):
         self.weights -= learning_rate * weights_error
         if self.add_bias:
             self.bias -= learning_rate * output_error
+        #print("WEIGHTS_ERROR, DECREMENT", weights_error, learning_rate * weights_error)
         return input_error
 
 class Conv_2d(Layer):
-    def __init__(self, kernel_size, activation=None, input_size=None):
+    def __init__(self, input_size, kernel_size, activation=None):
         super().__init__(activation)
         self.type = None
         self.name = "Conv_2d"
         self.input_size = input_size
         self.kernel_size = kernel_size
+        self.output_size = ((input_size - kernel_size) + 1, (input_size - kernel_size) + 1)
         #self.image = image
         #self.add_bias = add_bias
 
-    def init_kernel(self):
+    def init_weights(self, input_size):
         self.kernel = np.random.randn(self.kernel_size, self.kernel_size) / np.sqrt(2 * self.kernel_size)
 
 
     @apply_activation_forward
     def forward_propagation(self, input):
         """Applies the forward propogation for a Conv_2d layer. This convolves the input with the kernel."""
-        #TODO: Add support for multiple filters per layer?
-        self.input = input
+        self.input = input[0]
+        #print(self.input)
 
         assert len(self.input) >= len(self.kernel)
         assert len(self.input[0]) >= len(self.kernel[0])
@@ -143,11 +146,25 @@ class Conv_2d(Layer):
                 w_sum = self.weighted_sum([row[j:j+len(self.kernel[0])] for row in self.input[i:i+len(self.kernel)]], self.kernel)
                 output[i][j] = w_sum
 
-        return output
+        return np.array(output)
 
     @apply_activation_backward
-    def backward_propogation(self, output_error, learning_rate):
-        pass
+    def backward_propagation(self, output_error, learning_rate):
+        """Applies the backward propogation for a Conv_2d layer. This takes the output_error, and also uses the 
+        stored kernel weights and input."""
+        #inputs_error = [[0] * len(self.input[0]) for i in range(len(self.input))] 
+        weights_error = [[0] * self.kernel_size for i in range(self.kernel_size)]
+        
+        for i in range(self.kernel_size):
+            for j in range(self.kernel_size):
+                # is it kernel size or something else? Isn't it output_error length?
+                weights_error[i][j] = self.weighted_sum([row[j:j+len(output_error[0])] for row in self.input[i:i+len(output_error)]], output_error)
+
+        self.kernel -= learning_rate * np.array(weights_error)
+        rotated_kernel = np.rot90(self.kernel, 2)
+        inputs_error = convolve2d(rotated_kernel, self.input)
+        return inputs_error
+
 
     def weighted_sum(self, mat1, mat2):
         """Helper method to compute the weighted sum of two (sub-)matrices."""
@@ -162,6 +179,28 @@ class Conv_2d(Layer):
                 ws += mat1[i][j] * mat2[i][j]
 
         return ws
+
+class Flatten(Layer):
+    def __init__(self, input_size):
+        super().__init__(None)
+        self.input_size = input_size
+        self.output_size = input_size[0] ** 2
+
+    def init_weights(self, input_size):
+        pass
+    
+    def forward_propagation(self, input):
+        #print("FLATTEN IPUT", input)
+        #print(type(input))
+        #assert input is np.ndarray
+        self.orig_shape = input.shape
+        flat = np.array([input.flatten()])
+        #print(flat)
+        return flat
+    
+    def backward_propagation(self, flat, learning_rate):
+        return flat.reshape(self.orig_shape)
+
 
 class Max_Pool(Layer):
     def __init__(self, kernel_size, stride, activation=None, input_size=None):
@@ -186,7 +225,8 @@ class Max_Pool(Layer):
         return output
 
     @apply_activation_backward
-    def backward_propagation(self, output_error, learning_rate)
+    def backward_propagation(self, output_error, learning_rate):
+        pass
 
     def flatten(self, mat):
         """Flattens the matrix into a (1d) vector so as to maintain compatibility with the rest of the library."""
