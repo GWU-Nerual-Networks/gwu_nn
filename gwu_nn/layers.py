@@ -203,33 +203,62 @@ class Flatten(Layer):
 
 
 class Max_Pool(Layer):
-    def __init__(self, kernel_size, stride, activation=None, input_size=None):
+    def __init__(self, kernel_size=2, stride=2, activation=None, input_size=None):
+        super().__init__(None)
         self.type = None
         self.name = "Max_Pool"
         self.kernel_size = kernel_size
+        self.input_size = input_size
         self.stride = stride
+        self.output_size = int((self.input_size - self.kernel_size) / self.stride) + 1
+
+    def init_weights(self, input_size):
+        pass
 
     @apply_activation_forward
     def forward_propagation(self, input):
         # Drops unused columns (known as "valid padding" in tensorflow terminology).
-        dim1 = int((len(input) - self.kernel_size) / self.stride) + 1
-        dim2 = int((len(input[0]) - self.kernel_size) / self.stride) + 1
+        self.input = input[0]
+        #print("INPUT IS ", self.input)
+        dim1 = int((len(self.input) - self.kernel_size) / self.stride) + 1
+        dim2 = int((len(self.input[0]) - self.kernel_size) / self.stride) + 1
 
-        output = [[0] * dim2 for i in range(dim1)]
+        output = np.array([[0] * dim2 for i in range(dim1)])
+        self.max_only_input = np.zeros((len(self.input), len(self.input[0])))
 
         for i in range(0, dim1):
             for j in range(0, dim2):
-                pool = self.max_mat([row[j*self.stride:j*self.stride+self.kernel_size] for row in input[i*self.stride:i*self.stride+self.kernel_size]])
-                output[i][j] = pool
+                max, coords = self.mat_max_and_coords(self.input, i*self.stride, i*self.stride+self.kernel_size, j*self.stride, j*self.stride+self.kernel_size)
+                output[i][j] = max
+                self.max_only_input[coords[0]][coords[1]] = max
+                #pool = np.amax(np.matrix([row[j*stride:j*stride+kernel_size] for row in input[i*stride:i*stride+kernel_size]]))
+                #pool = np.matrix.max(np.matrix([row[j*self.stride:j*self.stride+self.kernel_size] for row in input[i*self.stride:i*self.stride+self.kernel_size]]))
+                #output[i][j] = pool
+                #self.max_coords.append(np.matrix.argmax(np.matrix([row[j*self.stride:j*self.stride+self.kernel_size] for row in input[i*self.stride:i*self.stride+self.kernel_size]]), axis=[0, 1]))
+                
 
-        return output
+        return np.array(output)
 
     @apply_activation_backward
     def backward_propagation(self, output_error, learning_rate):
-        pass
+        # The gradient is zero except at the maximum values themselves (and there, the gradient is unchanged).
+        # Thankfully, we saved this data which saves us from having to backtrack from scratch.
+        return self.max_only_input
+
+    def mat_max_and_coords(self, mat, low1, up1, low2, up2):
+        """Given a matrix and boundaries for a submatrix, return the maximum value and its index."""
+        max_so_far = -2**32
+        max_coords_so_far = (-1, -1)
+        for i in range(low1, up1):
+            for j in range(low2, up2):
+                if mat[i][j] > max_so_far:
+                    max_so_far = mat[i][j]
+                    max_coords_so_far = (i, j)
+        assert max_coords_so_far[0] >= 0
+        return max_so_far, max_coords_so_far
 
     def flatten(self, mat):
-        """Flattens the matrix into a (1d) vector so as to maintain compatibility with the rest of the library."""
+        """Flattens the matrix into a (1d) vector to permit max function."""
 
         v = []
         for i in range(len(mat)):
