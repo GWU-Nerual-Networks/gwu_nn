@@ -1,5 +1,7 @@
 import numpy as np
 from gwu_nn.loss_functions import MSE, LogLoss, CrossEntropy
+from gwu_nn.layers import Flatten
+import matplotlib.pyplot as plt
 
 loss_functions = {'mse': MSE, 'log_loss': LogLoss, 'cross_entropy': CrossEntropy}
 
@@ -49,7 +51,7 @@ class GWUNetwork():
     def fit(self, x_train, y_train, epochs, batch_size=None):
         # sample dimension first
         samples = len(x_train)
-
+        inc = 0
         #print("SAMPLE IS", samples)
 
         # training loop
@@ -59,10 +61,17 @@ class GWUNetwork():
                 # forward propagation
                 #print("x_train[j]", x_train[j])
                 #output = x_train[j].reshape(1, -1)
-                output = np.expand_dims(x_train[j], axis=0)
-                #output = x_train[j]
+                #output = np.expand_dims(x_train[j], axis=0)
+                output = x_train[j]
                 #print("OUTPUT is", output)
+    
                 for layer in self.layers:
+                    if j == 0 and type(layer) is Flatten:
+                        '''
+                        inc += 1
+                        strinc = str(inc)
+                        plt.imsave('after_filter' + strinc + '.jpg', output, cmap='gray')
+                        '''
                     output = layer.forward_propagation(output)
 
                 # compute loss (for display purpose only)
@@ -76,7 +85,7 @@ class GWUNetwork():
                     error = layer.backward_propagation(error, self.learning_rate)
 
             # calculate average error on all samples
-            if i % 10 == 0:
+            if i % 1 == 0:
                 err /= samples
                 print('epoch %d/%d   error=%f' % (i + 1, epochs, err))
                 

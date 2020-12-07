@@ -85,6 +85,7 @@ class Dense(Layer):
 
         Returns:
             np.array(float): The dot product of the input and the layer's weight tensor."""
+        #print(input)
         self.input = input
         output = np.dot(input, self.weights)
         if self.add_bias:
@@ -103,10 +104,12 @@ class Dense(Layer):
 
         Returns:
             np.array(float): The gradient of the error up to and including this layer."""
+        #print("stuff:", self.input.T, output_error)
         input_error = np.dot(output_error, self.weights.T)
         weights_error = np.dot(self.input.T, output_error)
 
         self.weights -= learning_rate * weights_error
+        #print("OKAY NEW WEIGHTS ARE", self.weights)
         if self.add_bias:
             self.bias -= learning_rate * output_error
         #print("WEIGHTS_ERROR, DECREMENT", weights_error, learning_rate * weights_error)
@@ -120,8 +123,6 @@ class Conv_2d(Layer):
         self.input_size = input_size
         self.kernel_size = kernel_size
         self.output_size = ((input_size - kernel_size) + 1, (input_size - kernel_size) + 1)
-        #self.image = image
-        #self.add_bias = add_bias
 
     def init_weights(self, input_size):
         self.kernel = np.random.randn(self.kernel_size, self.kernel_size) / np.sqrt(2 * self.kernel_size)
@@ -130,20 +131,21 @@ class Conv_2d(Layer):
     @apply_activation_forward
     def forward_propagation(self, input):
         """Applies the forward propogation for a Conv_2d layer. This convolves the input with the kernel."""
-        self.input = input[0]
-        #print(self.input)
+        self.input = input
 
-        assert len(self.input) >= len(self.kernel)
-        assert len(self.input[0]) >= len(self.kernel[0])
+        kern = self.kernel
+        assert len(self.input) >= len(kern)
+        assert len(self.input[0]) >= len(kern[0])
 
-        dim1 = len(self.input) - len(self.kernel) + 1
-        dim2 = len(self.input[0]) - len(self.kernel[0]) + 1
+        # Dimensions of the result of the convolution.
+        dim1 = len(self.input) - len(kern) + 1
+        dim2 = len(self.input[0]) - len(kern[0]) + 1
 
-        output = [[0] * dim2 for i in range(dim1)]
+        output = [[0.0] * dim2 for i in range(dim1)]
 
         for i in range(dim1):
             for j in range(dim2):
-                w_sum = self.weighted_sum([row[j:j+len(self.kernel[0])] for row in self.input[i:i+len(self.kernel)]], self.kernel)
+                w_sum = self.weighted_sum([row[j:j+len(kern[0])] for row in self.input[i:i+len(kern)]], kern)
                 output[i][j] = w_sum
 
         return np.array(output)
@@ -152,24 +154,22 @@ class Conv_2d(Layer):
     def backward_propagation(self, output_error, learning_rate):
         """Applies the backward propogation for a Conv_2d layer. This takes the output_error, and also uses the 
         stored kernel weights and input."""
-        #inputs_error = [[0] * len(self.input[0]) for i in range(len(self.input))] 
         weights_error = [[0] * self.kernel_size for i in range(self.kernel_size)]
         
         for i in range(self.kernel_size):
             for j in range(self.kernel_size):
-                # is it kernel size or something else? Isn't it output_error length?
                 weights_error[i][j] = self.weighted_sum([row[j:j+len(output_error[0])] for row in self.input[i:i+len(output_error)]], output_error)
 
         self.kernel -= learning_rate * np.array(weights_error)
         rotated_kernel = np.rot90(self.kernel, 2)
-        inputs_error = convolve2d(rotated_kernel, self.input)
+        inputs_error = convolve2d(rotated_kernel, output_error)
+
         return inputs_error
 
 
     def weighted_sum(self, mat1, mat2):
         """Helper method to compute the weighted sum of two (sub-)matrices."""
 
-        # The matrices ought to be of the same size.
         assert len(mat1) == len(mat2)
         assert len(mat1[0]) == len(mat2[0])
 
@@ -190,12 +190,9 @@ class Flatten(Layer):
         pass
     
     def forward_propagation(self, input):
-        #print("FLATTEN IPUT", input)
-        #print(type(input))
-        #assert input is np.ndarray
         self.orig_shape = input.shape
         flat = np.array([input.flatten()])
-        #print(flat)
+
         return flat
     
     def backward_propagation(self, flat, learning_rate):
@@ -218,24 +215,20 @@ class Max_Pool(Layer):
     @apply_activation_forward
     def forward_propagation(self, input):
         # Drops unused columns (known as "valid padding" in tensorflow terminology).
-        self.input = input[0]
-        #print("INPUT IS ", self.input)
+        self.input = input
+
         dim1 = int((len(self.input) - self.kernel_size) / self.stride) + 1
         dim2 = int((len(self.input[0]) - self.kernel_size) / self.stride) + 1
 
-        output = np.array([[0] * dim2 for i in range(dim1)])
-        self.max_only_input = np.zeros((len(self.input), len(self.input[0])))
+        output = np.array([[0.0] * dim2 for i in range(dim1)])
+        self.backprop_mat = np.zeros((len(self.input), len(self.input[0])))
+        self.coords_pairs = []
 
         for i in range(0, dim1):
             for j in range(0, dim2):
                 max, coords = self.mat_max_and_coords(self.input, i*self.stride, i*self.stride+self.kernel_size, j*self.stride, j*self.stride+self.kernel_size)
                 output[i][j] = max
-                self.max_only_input[coords[0]][coords[1]] = max
-                #pool = np.amax(np.matrix([row[j*stride:j*stride+kernel_size] for row in input[i*stride:i*stride+kernel_size]]))
-                #pool = np.matrix.max(np.matrix([row[j*self.stride:j*self.stride+self.kernel_size] for row in input[i*self.stride:i*self.stride+self.kernel_size]]))
-                #output[i][j] = pool
-                #self.max_coords.append(np.matrix.argmax(np.matrix([row[j*self.stride:j*self.stride+self.kernel_size] for row in input[i*self.stride:i*self.stride+self.kernel_size]]), axis=[0, 1]))
-                
+                self.coords_pairs.append((coords[0], coords[1]))
 
         return np.array(output)
 
@@ -243,7 +236,13 @@ class Max_Pool(Layer):
     def backward_propagation(self, output_error, learning_rate):
         # The gradient is zero except at the maximum values themselves (and there, the gradient is unchanged).
         # Thankfully, we saved this data which saves us from having to backtrack from scratch.
-        return self.max_only_input
+        coords_used_up = 0
+        for i in range(len(output_error)):
+            for j in range(len(output_error[0])):
+                self.backprop_mat[self.coords_pairs[coords_used_up][0]][self.coords_pairs[coords_used_up][1]] = output_error[i][j]
+                coords_used_up += 1
+
+        return self.backprop_mat
 
     def mat_max_and_coords(self, mat, low1, up1, low2, up2):
         """Given a matrix and boundaries for a submatrix, return the maximum value and its index."""
@@ -254,7 +253,7 @@ class Max_Pool(Layer):
                 if mat[i][j] > max_so_far:
                     max_so_far = mat[i][j]
                     max_coords_so_far = (i, j)
-        assert max_coords_so_far[0] >= 0
+
         return max_so_far, max_coords_so_far
 
     def flatten(self, mat):

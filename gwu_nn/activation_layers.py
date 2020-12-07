@@ -32,6 +32,7 @@ class ActivationLayer:
         Returns:
             np.array(float): backwards pass (output_error) up to this layer
         """
+        #print("output")
         return output_error * self.activation_prime(self.input)
 
 

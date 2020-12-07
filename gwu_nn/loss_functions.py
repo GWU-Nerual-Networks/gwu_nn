@@ -21,6 +21,12 @@ class MSE(LossFunction):
 
     @classmethod
     def loss(cls, y_true, y_pred):
+        '''
+        print("LENS OF y_true, y_pred", len(y_true), len(y_pred))
+        for i in range(len(y_true)):
+            print("y_true, y_pred", y_true[i], y_pred[i])
+        print("what will be returned", np.mean(np.power(y_true - y_pred, 2)))
+        '''
         return np.mean(np.power(y_true - y_pred, 2))
 
     @classmethod
