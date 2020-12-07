@@ -48,19 +48,11 @@ class GWUNetwork():
         predictions = []
 
         for prob in probs:
-
-            # if prob > 0.5:
-            #     predictions.append(1)
-            # elif prob <= 0.5:
-            #     predictions.append(0)
-            class_label = np.argmax(prob)
-            predictions.append(class_label)
-
-            print(class_label)
-            print(prob)
-
+            if prob > 0.5:
+                predictions.append(1)
+            elif prob <= 0.5:
+                predictions.append(0)
         for i in range(len(predictions)):
-            print("prediction is ", predictions[i], " true label is ", y[i])
             if predictions[i]== y[i]:
                 correct += 1
         print("accuracy", (correct)/len(predictions))
@@ -77,7 +69,7 @@ class GWUNetwork():
 
                 # forward propagation
                 output = x_train[j]
-                # output = x_train[j].reshape(1, -1)
+
                 for layer in self.layers:
                     output = layer.forward_propagation(output)
 
@@ -85,17 +77,14 @@ class GWUNetwork():
                 y_true = np.array(y_train[j]).reshape(-1, 1)
                 err += self.loss(y_true, output)
 
-                # backward propagation
-                # NOTE: error below acts as expected (all errors are the same except for true label)
-                # TO DO: Manually perform backprop for softmax (last layer) here and do backprop for rest of layers
                 error = self.loss_prime(y_true, output)
                 for layer in reversed(self.layers):
                     error = layer.backward_propagation(error, self.learning_rate)
 
             # calculate average error on all samples
-            # if i % 10 == 0:
-            err /= samples
-            print('epoch %d/%d   error=%f' % (i + 1, epochs, err))
+            if i % 10 == 0:
+                err /= samples
+                print('epoch %d/%d   error=%f' % (i + 1, epochs, err))
 
     def __repr__(self):
         rep = "Model:"
