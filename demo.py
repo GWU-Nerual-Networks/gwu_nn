@@ -31,7 +31,7 @@ for i in range(100):
 # Set up the network.
 network = GWUNetwork()
 
-# Pass through an initial "standard" (i.e. small kernel) convolutional filter.
+# Pass through a convolutional filter.
 network.add(Conv_2d(28, 3, activation='sigmoid'))
 # Pool the data. Note that using a stride of 2 and a kernel size of 2 effectively halves each dimension.
 network.add(Max_Pool(kernel_size=2, stride=2, input_size=26))

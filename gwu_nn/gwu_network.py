@@ -1,6 +1,6 @@
 import numpy as np
 from gwu_nn.loss_functions import MSE, LogLoss, CrossEntropy
-from gwu_nn.layers import Flatten
+from gwu_nn.layers import Flatten, Dense
 import matplotlib.pyplot as plt
 
 loss_functions = {'mse': MSE, 'log_loss': LogLoss, 'cross_entropy': CrossEntropy}
@@ -66,12 +66,16 @@ class GWUNetwork():
                 #print("OUTPUT is", output)
     
                 for layer in self.layers:
+                    if type(layer) is Dense and np.ndim(output) == 1:
+                        #print("invoked")
+                        output = np.array(x_train[j]).reshape(1, -1)
                     if j == 0 and type(layer) is Flatten:
                         '''
                         inc += 1
                         strinc = str(inc)
                         plt.imsave('after_filter' + strinc + '.jpg', output, cmap='gray')
                         '''
+                    #print("RESHAPE", output)
                     output = layer.forward_propagation(output)
 
                 # compute loss (for display purpose only)

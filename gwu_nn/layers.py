@@ -127,7 +127,6 @@ class Conv_2d(Layer):
     def init_weights(self, input_size):
         self.kernel = np.random.randn(self.kernel_size, self.kernel_size) / np.sqrt(2 * self.kernel_size)
 
-
     @apply_activation_forward
     def forward_propagation(self, input):
         """Applies the forward propogation for a Conv_2d layer. This convolves the input with the kernel."""
